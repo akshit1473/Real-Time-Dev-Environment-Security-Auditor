@@ -14,6 +14,7 @@ PATH_ATTACK_SCRIPT = os.path.join(
 )
 
 from fastapi.middleware.cors import CORSMiddleware
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,7 +24,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app = FastAPI()
+
 
 
 @app.get("/")
