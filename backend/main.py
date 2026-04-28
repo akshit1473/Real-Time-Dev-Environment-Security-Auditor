@@ -13,6 +13,16 @@ PATH_ATTACK_SCRIPT = os.path.join(
     BASE_DIR, "..", "scripts", "path_hijack_hackathon.sh"
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app = FastAPI()
 
 
