@@ -33,7 +33,7 @@ def root():
 
 @app.get("/api/audit/path")
 def audit_path():
-    raw = run_script(PATH_AUDITOR_SCRIPT)
+    raw = run_script(PATH_AUDITOR_SCRIPT, ["--json"])
     return analyze_risk(raw)
 
 
