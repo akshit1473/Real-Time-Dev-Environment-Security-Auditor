@@ -1,1 +1,104 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>DevSec Auditor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      text-align: center;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #38bdf8;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      margin: 20px auto;
+      border-radius: 12px;
+      width: 60%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    button {
+      padding: 12px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .audit-btn {
+      background: #22c55e;
+      color: black;
+    }
+
+    .attack-btn {
+      background: #ef4444;
+      color: white;
+    }
+
+    .output {
+      text-align: left;
+      margin-top: 20px;
+      background: #020617;
+      padding: 15px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+    }
+
+    .high { color: #ef4444; }
+    .medium { color: #facc15; }
+    .low { color: #22c55e; }
+  </style>
+</head>
+<body>
+
+  <h1>⚡ Dev Environment Security Auditor</h1>
+
+  <div class="card">
+    <button class="audit-btn" onclick="runAudit()">Run Security Audit</button>
+    <button class="attack-btn" onclick="runAttack()">Simulate Attack</button>
+
+    <div id="result" class="output">Click "Run Security Audit" to begin...</div>
+  </div>
+
+<script>
+async function runAudit() {
+  const res = await fetch("http://127.0.0.1:8000/api/audit/path");
+  const data = await res.json();
+
+  let severityClass = data.overall_severity?.toLowerCase() || "low";
+
+  let output = `
+Risk Score: ${data.risk_score}
+Severity: <span class="${severityClass}">${data.overall_severity}</span>
+
+Issues:
+`;
+
+  data.insights?.forEach(i => {
+    output += `- ${i.issue} → ${i.fix}\n`;
+  });
+
+  document.getElementById("result").innerHTML = output;
+}
+
+async function runAttack() {
+  const res = await fetch("http://127.0.0.1:8000/api/simulate/attack");
+  const data = await res.json();
+
+  document.getElementById("result").innerText =
+    "⚠️ ATTACK OUTPUT:\n\n" + JSON.stringify(data, null, 2);
+}
+</script>
+
+</body>
+</html>
