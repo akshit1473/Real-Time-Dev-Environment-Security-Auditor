@@ -70,12 +70,13 @@ if [ "$1" == "--json" ]; then
 else
  echo "PATH AUDIT RESULT"
 
-if [ ${#issues[@]} -eq 0 ]; then
+    if [ ${#issues[@]} -eq 0 ]; then
     echo "No issues detected"
-else
-    for i in "${issues[@]}"; do
-        echo "$i"
-    done
+    else
+        for i in "${issues[@]}"; do
+            echo "$i"
+        done
+    fi
 fi
 
 
