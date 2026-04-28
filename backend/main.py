@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from executor import run_script
 from risk_engine import analyze_risk
+from fastapi.responses import FileResponse
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -24,7 +25,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+@app.get("/")
+def serve_ui():
+    return FileResponse("../frontend/index.html")
 
 
 @app.get("/")
