@@ -1,6 +1,17 @@
 from fastapi import FastAPI
 from executor import run_script
 from risk_engine import analyze_risk
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+PATH_AUDITOR_SCRIPT = os.path.join(
+    BASE_DIR, "..", "scripts", "path_auditor_hackathon.sh"
+)
+
+PATH_ATTACK_SCRIPT = os.path.join(
+    BASE_DIR, "..", "scripts", "path_hijack_hackathon.sh"
+)
 
 app = FastAPI()
 
@@ -12,22 +23,13 @@ def root():
 
 @app.get("/api/audit/path")
 def audit_path():
-    raw = run_script("../scripts/path_auditor_hackathon.sh")
-
-    if raw.get("execution", {}).get("status") != "success":
-        return {"error": "Audit script failed", "details": raw}
-
+    raw = run_script(PATH_AUDITOR_SCRIPT)
     return analyze_risk(raw)
 
 
-@app.get("/api/simulate/path")
-def simulate_path():
-    raw = run_script("../scripts/path_auditor_hackathon.sh")
-
-    if raw.get("execution", {}).get("status") != "success":
-        return {"error": "Audit script failed", "details": raw}
-
-    analysis = analyze_risk(raw)
+@app.get("/api/simulate/attack")
+def simulate_attack():
+    return run_script(PATH_ATTACK_SCRIPT)
 
     if not analysis.get("vulnerable"):
         return {
