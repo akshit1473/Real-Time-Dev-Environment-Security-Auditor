@@ -72,7 +72,6 @@ else
     for i in "${issues[@]}"; do
         echo "$i"
     done
-fies
 fi
 
 
