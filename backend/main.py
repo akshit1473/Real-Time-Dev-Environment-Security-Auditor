@@ -10,17 +10,23 @@ def root():
     return {"status": "working"}
 
 
-# 🔍 Audit endpoint
 @app.get("/api/audit/path")
 def audit_path():
     raw = run_script("scripts/path_auditor.sh")
+
+    if raw.get("execution", {}).get("status") != "success":
+        return {"error": "Audit script failed"}
+
     return analyze_risk(raw)
 
 
-# 🔥 Attack endpoint (only if vulnerable)
 @app.get("/api/simulate/path")
 def simulate_path():
     raw = run_script("scripts/path_auditor.sh")
+
+    if raw.get("execution", {}).get("status") != "success":
+        return {"error": "Audit script failed"}
+
     analysis = analyze_risk(raw)
 
     if not analysis["vulnerable"]:
@@ -29,17 +35,26 @@ def simulate_path():
             "message": "No vulnerability detected"
         }
 
-    return run_script("scripts/path_hijack_demo.sh")
+    run_script("scripts/path_hijack_demo.sh")
+
+    return {
+        "status": "ready",
+        "message": "Hijack prepared. Run python3 manually to observe exploit."
+    }
 
 
-# 📊 Summary endpoint (for UI)
 @app.get("/api/summary")
 def summary():
     raw = run_script("scripts/path_auditor.sh")
+
+    if raw.get("execution", {}).get("status") != "success":
+        return {"error": "Audit script failed"}
+
     analysis = analyze_risk(raw)
 
     return {
         "overall_risk": "HIGH" if analysis["vulnerable"] else "LOW",
         "risk_score": analysis["risk_score"],
+        "vulnerable": analysis["vulnerable"],
         "issues": analysis["issues"]
     }
