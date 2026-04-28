@@ -68,7 +68,11 @@ collect_path_issues
 if [ "$1" == "--json" ]; then
     output_path_json
 else
-    echo "PATH AUDIT RESULT"
+ echo "PATH AUDIT RESULT"
+
+if [ ${#issues[@]} -eq 0 ]; then
+    echo "No issues detected"
+else
     for i in "${issues[@]}"; do
         echo "$i"
     done
