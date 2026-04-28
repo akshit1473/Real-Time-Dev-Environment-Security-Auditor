@@ -1,29 +1,18 @@
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
   <title>DevSec Auditor</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       background: #0f172a;
       color: #e2e8f0;
+      font-family: monospace;
       text-align: center;
       padding: 40px;
     }
 
     h1 {
       color: #38bdf8;
-    }
-
-    .card {
-      background: #1e293b;
-      padding: 20px;
-      margin: 20px auto;
-      border-radius: 12px;
-      width: 60%;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
     }
 
     button {
@@ -35,68 +24,110 @@
       font-weight: bold;
     }
 
-    .audit-btn {
-      background: #22c55e;
-      color: black;
-    }
+    .audit { background: #22c55e; color: black; }
+    .attack { background: #ef4444; color: white; }
 
-    .attack-btn {
-      background: #ef4444;
-      color: white;
-    }
-
-    .output {
-      text-align: left;
-      margin-top: 20px;
+    .terminal {
       background: #020617;
-      padding: 15px;
-      border-radius: 8px;
+      color: #22c55e;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 10px;
+      text-align: left;
+      height: 300px;
+      overflow-y: auto;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .line {
+      margin-bottom: 5px;
       white-space: pre-wrap;
     }
 
-    .high { color: #ef4444; }
-    .medium { color: #facc15; }
-    .low { color: #22c55e; }
+    .blink {
+      animation: blink 1s infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
   </style>
 </head>
 <body>
 
-  <h1>⚡ Dev Environment Security Auditor</h1>
+<h1>⚡ Dev Environment Security Auditor</h1>
 
-  <div class="card">
-    <button class="audit-btn" onclick="runAudit()">Run Security Audit</button>
-    <button class="attack-btn" onclick="runAttack()">Simulate Attack</button>
+<button class="audit" onclick="runAudit()">Run Audit</button>
+<button class="attack" onclick="runAttack()">Simulate Attack</button>
 
-    <div id="result" class="output">Click "Run Security Audit" to begin...</div>
-  </div>
+<div id="terminal" class="terminal">
+  <div class="line">> Ready...</div>
+</div>
 
 <script>
+function addLine(text) {
+  const terminal = document.getElementById("terminal");
+  const line = document.createElement("div");
+  line.className = "line";
+  line.innerText = text;
+  terminal.appendChild(line);
+  terminal.scrollTop = terminal.scrollHeight;
+}
+
+function typeLine(text, speed = 20) {
+  return new Promise(resolve => {
+    const terminal = document.getElementById("terminal");
+    const line = document.createElement("div");
+    line.className = "line";
+    terminal.appendChild(line);
+
+    let i = 0;
+    function typing() {
+      if (i < text.length) {
+        line.innerText += text[i];
+        i++;
+        setTimeout(typing, speed);
+      } else {
+        resolve();
+      }
+    }
+    typing();
+  });
+}
+
 async function runAudit() {
+  document.getElementById("terminal").innerHTML = "";
+
+  addLine("> Running security audit...\n");
+
   const res = await fetch("http://127.0.0.1:8000/api/audit/path");
   const data = await res.json();
 
-  let severityClass = data.overall_severity?.toLowerCase() || "low";
+  await typeLine("Risk Score: " + data.risk_score);
+  await typeLine("Vulnerable: " + data.vulnerable + "\n");
 
-  let output = `
-Risk Score: ${data.risk_score}
-Severity: <span class="${severityClass}">${data.overall_severity}</span>
+  for (let issue of data.issues) {
+    await typeLine(issue);
+  }
 
-Issues:
-`;
-
-  data.insights?.forEach(i => {
-    output += `- ${i.issue} → ${i.fix}\n`;
-  });
-
-  document.getElementById("result").innerHTML = output;
+  addLine("\n> Audit complete.");
 }
 
 async function runAttack() {
+  document.getElementById("terminal").innerHTML = "";
+
+  addLine("> Initiating exploit...\n");
+
   const res = await fetch("http://127.0.0.1:8000/api/simulate/attack");
   const data = await res.json();
 
-  document.getElementById("result").innerText =
-    "⚠️ ATTACK OUTPUT:\n\n" + JSON.stringify(data, null, 2);
+  const lines = data.output.split("\n");
+
+  for (let line of lines) {
+    await typeLine(line, 15);
+  }
+
+  await typeLine("\n🔥 SYSTEM COMPROMISED", 30);
 }
 </script>
 
