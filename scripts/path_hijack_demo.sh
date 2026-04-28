@@ -1,40 +1,32 @@
 #!/usr/bin/bash
 
-set -e   #exits on error. 
+set -e
 
-# Basic path hijack demo script that uses binary planting attack method.
+echo "[*] Attempting PATH hijack..."
 
-echo "[*] Simulating PATH hijack using Binary Planting"
-
-# Check if python3 exists
-command -v python3 >/dev/null 2>&1 || {
-    echo "python3 not found!, demo may not behave as expected"
+# Check if '.' is in PATH
+if [[ ":$PATH:" != *":.:"* ]]; then
+    echo "[!] No vulnerability detected: '.' not in PATH"
+    echo "[*] Attack aborted."
     exit 1
-}
+fi
 
-echo "Original python3 location:"
+echo "[*] Vulnerability confirmed: '.' found in PATH"
+
+echo "[*] Original python3 location:"
 which python3
 
-#creating the malicious library 
-echo -e '#!/bin/bash\necho "PYTHON EXECUTION HIJACKED."' > ./python3
+# Create malicious binary
+echo -e '#!/bin/bash\necho "🔥 PYTHON EXECUTION HIJACKED"' > ./python3
 chmod +x ./python3
 
-echo "Entering isolated environment (hijack simulation)..."
+echo "[*] Running hijack..."
 
-(
-export PATH=.:$PATH
-
-echo "Hijacked python3 location:"
-which python3
-
-echo "executing python3.."
 python3
-)
 
 rm -f ./python3
 
-echo "DEMO COMPLETE."
-
+echo "[*] Demo complete."
 
 
 
