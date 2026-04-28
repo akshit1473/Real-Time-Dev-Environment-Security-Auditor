@@ -1,33 +1,28 @@
 def analyze_risk(raw):
-    # Handle execution failure
+
     if raw.get("execution", {}).get("status") != "success":
         return {
             "risk_score": 0,
             "vulnerable": False,
             "issues": [],
-            "error": "analysis_failed"
+            "error": "execution_failed"
         }
 
-    issues = raw.get("data", {}).get("issues", [])
+    data = raw.get("data", {})
+
+    # Handle both formats
+    issues = data.get("issues") or raw.get("issues") or []
 
     score = 0
-    critical = []
-    warnings = []
 
-    for i in issues:
-        if "CRITICAL" in i:
+    for issue in issues:
+        if issue.startswith("CRITICAL"):
             score += 3
-            critical.append(i)
-        elif "WARN" in i:
+        elif issue.startswith("WARN"):
             score += 1
-            warnings.append(i)
-        else:
-            warnings.append(i)
-
-    sorted_issues = critical + warnings
 
     return {
         "risk_score": min(score, 10),
         "vulnerable": score > 0,
-        "issues": sorted_issues
+        "issues": issues
     }
