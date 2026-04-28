@@ -12,7 +12,7 @@ def root():
 
 @app.get("/api/audit/path")
 def audit_path():
-    raw = run_script("scripts/path_auditor.sh")
+    raw = run_script("scripts/path_auditor_hackathon.sh")
 
     if raw.get("execution", {}).get("status") != "success":
         return {"error": "Audit script failed"}
@@ -22,7 +22,7 @@ def audit_path():
 
 @app.get("/api/simulate/path")
 def simulate_path():
-    raw = run_script("scripts/path_auditor.sh")
+    raw = run_script("scripts/path_auditor_hackathon.sh")
 
     if raw.get("execution", {}).get("status") != "success":
         return {"error": "Audit script failed"}
@@ -35,7 +35,7 @@ def simulate_path():
             "message": "No vulnerability detected"
         }
 
-    run_script("scripts/path_hijack_demo.sh")
+    run_script("scripts/path_hijack_hackathon.sh")
 
     return {
         "status": "ready",
@@ -45,7 +45,7 @@ def simulate_path():
 
 @app.get("/api/summary")
 def summary():
-    raw = run_script("scripts/path_auditor.sh")
+    raw = run_script("scripts/path_auditor_hackathon.sh")
 
     if raw.get("execution", {}).get("status") != "success":
         return {"error": "Audit script failed"}
