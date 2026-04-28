@@ -1,33 +1,21 @@
-import subprocess
-import json
-import time
-from datetime import datetime
-
-
 def run_script(script, args=None):
+    import subprocess
+    import time
+    import json
+    from datetime import datetime
+
     start = time.time()
 
-    cmd = ["bash", script, "--json"]
+    cmd = ["bash", script]
+
     if args:
         cmd.extend(args)
 
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
-    except subprocess.TimeoutExpired:
-        return {
-            "execution": {
-                "status": "timeout"
-            },
-            "meta": {
-                "script": script,
-                "timestamp": datetime.utcnow().isoformat()
-            }
-        }
+    result = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True
+    )
 
     duration = int((time.time() - start) * 1000)
 
@@ -59,7 +47,7 @@ def run_script(script, args=None):
             "data": parsed.get("data", parsed)
         }
 
-    except json.JSONDecodeError:
+    except:
         return {
             "execution": {
                 "status": "parse_error",
@@ -69,6 +57,5 @@ def run_script(script, args=None):
                 "script": script,
                 "timestamp": datetime.utcnow().isoformat()
             },
-            "raw": result.stdout,
-            "stderr": result.stderr
+            "raw": result.stdout
         }
