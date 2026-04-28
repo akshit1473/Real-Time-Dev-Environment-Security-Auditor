@@ -1,196 +1,149 @@
 <!DOCTYPE html>
-<html>
+<html class="dark">
 <head>
-  <title>DevSec Auditor</title>
-  <style>
-    body {
-      background: #0f172a;
-      color: #e2e8f0;
-      font-family: monospace;
-      text-align: center;
-      padding: 40px;
-    }
+<meta charset="UTF-8">
+<title>GhostPath</title>
 
-    h1 {
-      color: #38bdf8;
-    }
+<script src="https://cdn.tailwindcss.com"></script>
 
-    button {
-      padding: 12px 20px;
-      margin: 10px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
+<style>
+body {
+    background: #0b0e14;
+    color: #00FF41;
+    font-family: 'JetBrains Mono', monospace;
+}
 
-    .audit { background: #22c55e; color: black; }
-    .attack { background: #ef4444; color: white; }
-
-    .terminal {
-      background: #020617;
-      color: #22c55e;
-      padding: 20px;
-      margin-top: 20px;
-      border-radius: 10px;
-      text-align: left;
-      height: 300px;
-      overflow-y: auto;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-
-    .line {
-      margin-bottom: 5px;
-      white-space: pre-wrap;
-    }
-
-    .blink {
-      animation: blink 1s infinite;
-    }
-
-    @keyframes blink {
-      50% { opacity: 0; }
-    }
-  </style>
+.glow {
+    text-shadow: 0 0 10px rgba(0,255,65,0.6);
+}
+</style>
 </head>
-<body>
 
-<h1>⚡ Dev Environment Security Auditor</h1>
+<body class="h-screen flex flex-col">
 
-<button onclick="runAudit()">SCAN</button>
-<button onclick="runAttack()">EXPLOIT</button>
+<!-- HEADER -->
+<header class="p-4 border-b border-green-500/20 flex justify-between">
+    <h1 class="text-xl font-bold glow">GhostPath</h1>
+    <div class="flex gap-3">
+        <button onclick="runScan()" class="px-4 py-1 border border-green-400 hover:bg-green-400/10">SCAN</button>
+        <button onclick="runExploit()" class="px-4 py-1 border border-red-400 text-red-400 hover:bg-red-400/10">EXPLOIT</button>
+    </div>
+</header>
 
-<div id="terminal" class="terminal">
-  <div class="line">> Ready...</div>
+<!-- MAIN -->
+<div class="flex-1 p-6 grid grid-cols-3 gap-6">
+
+    <!-- RISK -->
+    <div class="border border-green-500/20 p-6 flex flex-col items-center justify-center">
+        <div class="text-sm mb-2">RISK SCORE</div>
+        <div id="riskScore" class="text-5xl glow">--</div>
+    </div>
+
+    <!-- ISSUES -->
+    <div class="col-span-2 border border-green-500/20 p-4">
+        <div class="mb-2 text-sm">DETECTED ISSUES</div>
+        <div id="issuesContainer" class="space-y-2 text-sm"></div>
+    </div>
+
+    <!-- EXPLOIT -->
+    <div class="col-span-3 border border-green-500/20 p-4">
+        <div class="mb-2 text-sm">EXPLOIT STATUS</div>
+        <div id="exploitStatus" class="space-y-1 text-sm"></div>
+    </div>
+
+    <!-- TERMINAL -->
+    <div class="col-span-3 border border-green-500/20 p-4 h-48 overflow-y-auto bg-black text-sm">
+        <div id="terminal"></div>
+    </div>
+
 </div>
 
 <script>
-function addLine(text) {
-  const terminal = document.getElementById("terminal");
-  const line = document.createElement("div");
-  line.className = "line";
-  line.innerText = text;
-  terminal.appendChild(line);
-  terminal.scrollTop = terminal.scrollHeight;
-}
+const API = "http://127.0.0.1:8000";
 
-function typeLine(text, speed = 20) {
-  return new Promise(resolve => {
-    const terminal = document.getElementById("terminal");
+// ---------- TERMINAL ----------
+function log(msg) {
+    const term = document.getElementById("terminal");
     const line = document.createElement("div");
-    line.className = "line";
-    terminal.appendChild(line);
+    line.textContent = msg;
+    term.appendChild(line);
+    term.scrollTop = term.scrollHeight;
+}
 
-    let i = 0;
-    function typing() {
-      if (i < text.length) {
-        line.innerText += text[i];
-        i++;
-        setTimeout(typing, speed);
-      } else {
-        resolve();
-      }
+// ---------- SCAN ----------
+async function runScan() {
+    log("[SCAN] Running PATH audit...");
+
+    try {
+        const res = await fetch(API + "/api/audit/path");
+        const data = await res.json();
+
+        document.getElementById("riskScore").innerText = data.risk_score + "/10";
+
+        const container = document.getElementById("issuesContainer");
+        container.innerHTML = "";
+
+        if (data.issues.length === 0) {
+            container.innerHTML = "<div class='text-green-400'>No issues detected</div>";
+            log("[OK] No vulnerabilities found");
+            return;
+        }
+
+        data.issues.forEach(issue => {
+            const div = document.createElement("div");
+
+            if (issue.includes("CRITICAL")) {
+                div.className = "text-red-400";
+            } else {
+                div.className = "text-yellow-300";
+            }
+
+            div.textContent = issue;
+            container.appendChild(div);
+
+            log("[ISSUE] " + issue);
+        });
+
+        log("[SCAN COMPLETE]");
+
+    } catch (err) {
+        log("[ERROR] Scan failed");
     }
-    typing();
-  });
 }
 
-async function runAudit() {
-  document.getElementById("terminal").innerHTML = "";
+// ---------- EXPLOIT ----------
+async function runExploit() {
+    log("[EXEC] Launching PATH hijack simulation...");
 
-  addLine("> Running security audit...\n");
+    try {
+        const res = await fetch(API + "/api/simulate/attack");
+        const data = await res.json();
 
-  const res = await fetch("http://127.0.0.1:8000/api/audit/path");
-  const data = await res.json();
+        const panel = document.getElementById("exploitStatus");
+        panel.innerHTML = "";
 
-  await typeLine("Risk Score: " + data.risk_score);
-  await typeLine("Vulnerable: " + data.vulnerable + "\n");
+        const steps = [
+            "Binary planted",
+            "PATH hijack triggered",
+            "Command execution hijacked"
+        ];
 
-  for (let issue of data.issues) {
-    await typeLine(issue);
-  }
+        steps.forEach((step, i) => {
+            const div = document.createElement("div");
 
-  addLine("\n> Audit complete.");
-}
+            div.textContent = step + " → " + (i === steps.length - 1 ? "SUCCESS" : "DONE");
+            div.className = "text-green-400";
 
-async function runAttack() {
-  document.getElementById("terminal").innerHTML = "";
+            panel.appendChild(div);
+        });
 
-  addLine("> Initiating exploit...\n");
+        log("[SUCCESS] Exploit executed");
 
-  const res = await fetch("http://127.0.0.1:8000/api/simulate/attack");
-  const data = await res.json();
-
-  const lines = data.output.split("\n");
-
-  for (let line of lines) {
-    await typeLine(line, 15);
-  }
-
-  await typeLine("\n🔥 SYSTEM COMPROMISED", 30);
+    } catch (err) {
+        log("[ERROR] Exploit failed");
+    }
 }
 </script>
 
 </body>
 </html>
-
-<script>
-async function runAudit() {
-  log("> Running environment audit...\n");
-
-  const res = await fetch("http://127.0.0.1:8000/api/audit/path");
-  const data = await res.json();
-
-  // ---- Risk Score ----
-  document.getElementById("riskScore").innerText = data.risk_score;
-
-  // ---- Vulnerability Table ----
-  const table = document.getElementById("vulnTable");
-  table.innerHTML = "";
-
-  data.issues.forEach(issue => {
-    const row = document.createElement("tr");
-
-    let severity = "LOW";
-    if (issue.includes("CRITICAL")) severity = "CRITICAL";
-    else if (issue.includes("WARN")) severity = "MEDIUM";
-
-    row.innerHTML = `
-      <td>${issue}</td>
-      <td>${severity}</td>
-      <td>Local System</td>
-      <td>Now</td>
-    `;
-
-    table.appendChild(row);
-  });
-
-  if (data.vulnerable) {
-    log("\n[!] Vulnerability detected — system exploitable\n");
-  }
-}
-
-async function runAttack() {
-  log("> Initiating exploit...\n");
-
-  const res = await fetch("http://127.0.0.1:8000/api/simulate/attack");
-  const data = await res.json();
-
-  const lines = data.output.split("\n");
-
-  for (let line of lines) {
-    log(line);
-  }
-
-  log("\n🔥 SYSTEM COMPROMISED");
-}
-
-// ---- Terminal Logger ----
-function log(text) {
-  const term = document.getElementById("terminal");
-  const line = document.createElement("div");
-  line.innerText = text;
-  term.appendChild(line);
-  term.scrollTop = term.scrollHeight;
-}
-</script>
