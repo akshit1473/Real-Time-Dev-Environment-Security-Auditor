@@ -1,13 +1,10 @@
 def run_script(script, args=None):
-    import subprocess
-    import time
-    import json
+    import subprocess, time, json
     from datetime import datetime
 
     start = time.time()
 
     cmd = ["bash", script]
-
     if args:
         cmd.extend(args)
 
@@ -32,31 +29,31 @@ def run_script(script, args=None):
             "error": result.stderr
         }
 
-   try:
-    parsed = json.loads(result.stdout)
+    # ✅ THIS BLOCK MUST BE INDENTED INSIDE FUNCTION
+    try:
+        parsed = json.loads(result.stdout)
 
-    return {
-        "execution": {
-            "status": "success",
-            "time_ms": duration
-        },
-        "meta": {
-            "script": script,
-            "timestamp": datetime.utcnow().isoformat()
-        },
-        "data": parsed.get("data", parsed)
-    }
+        return {
+            "execution": {
+                "status": "success",
+                "time_ms": duration
+            },
+            "meta": {
+                "script": script,
+                "timestamp": datetime.utcnow().isoformat()
+            },
+            "data": parsed.get("data", parsed)
+        }
 
-except:
-    # If not JSON, treat as normal output (NOT an error)
-    return {
-        "execution": {
-            "status": "success",
-            "time_ms": duration
-        },
-        "meta": {
-            "script": script,
-            "timestamp": datetime.utcnow().isoformat()
-        },
-        "output": result.stdout.strip()
-    }
+    except Exception:
+        return {
+            "execution": {
+                "status": "success",
+                "time_ms": duration
+            },
+            "meta": {
+                "script": script,
+                "timestamp": datetime.utcnow().isoformat()
+            },
+            "output": result.stdout.strip()
+        }
