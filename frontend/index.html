@@ -57,8 +57,8 @@
 
 <h1>⚡ Dev Environment Security Auditor</h1>
 
-<button class="audit" onclick="runAudit()">Run Audit</button>
-<button class="attack" onclick="runAttack()">Simulate Attack</button>
+<button onclick="runAudit()">SCAN</button>
+<button onclick="runAttack()">EXPLOIT</button>
 
 <div id="terminal" class="terminal">
   <div class="line">> Ready...</div>
@@ -133,3 +133,64 @@ async function runAttack() {
 
 </body>
 </html>
+
+<script>
+async function runAudit() {
+  log("> Running environment audit...\n");
+
+  const res = await fetch("http://127.0.0.1:8000/api/audit/path");
+  const data = await res.json();
+
+  // ---- Risk Score ----
+  document.getElementById("riskScore").innerText = data.risk_score;
+
+  // ---- Vulnerability Table ----
+  const table = document.getElementById("vulnTable");
+  table.innerHTML = "";
+
+  data.issues.forEach(issue => {
+    const row = document.createElement("tr");
+
+    let severity = "LOW";
+    if (issue.includes("CRITICAL")) severity = "CRITICAL";
+    else if (issue.includes("WARN")) severity = "MEDIUM";
+
+    row.innerHTML = `
+      <td>${issue}</td>
+      <td>${severity}</td>
+      <td>Local System</td>
+      <td>Now</td>
+    `;
+
+    table.appendChild(row);
+  });
+
+  if (data.vulnerable) {
+    log("\n[!] Vulnerability detected — system exploitable\n");
+  }
+}
+
+async function runAttack() {
+  log("> Initiating exploit...\n");
+
+  const res = await fetch("http://127.0.0.1:8000/api/simulate/attack");
+  const data = await res.json();
+
+  const lines = data.output.split("\n");
+
+  for (let line of lines) {
+    log(line);
+  }
+
+  log("\n🔥 SYSTEM COMPROMISED");
+}
+
+// ---- Terminal Logger ----
+function log(text) {
+  const term = document.getElementById("terminal");
+  const line = document.createElement("div");
+  line.innerText = text;
+  term.appendChild(line);
+  term.scrollTop = term.scrollHeight;
+}
+</script>
