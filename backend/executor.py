@@ -11,11 +11,23 @@ def run_script(script, args=None):
     if args:
         cmd.extend(args)
 
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True
-    )
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+    except subprocess.TimeoutExpired:
+        return {
+            "execution": {
+                "status": "timeout"
+            },
+            "meta": {
+                "script": script,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        }
 
     duration = int((time.time() - start) * 1000)
 
@@ -47,7 +59,7 @@ def run_script(script, args=None):
             "data": parsed.get("data", parsed)
         }
 
-    except:
+    except json.JSONDecodeError:
         return {
             "execution": {
                 "status": "parse_error",
@@ -57,5 +69,6 @@ def run_script(script, args=None):
                 "script": script,
                 "timestamp": datetime.utcnow().isoformat()
             },
-            "raw": result.stdout
+            "raw": result.stdout,
+            "stderr": result.stderr
         }
