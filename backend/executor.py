@@ -32,30 +32,31 @@ def run_script(script, args=None):
             "error": result.stderr
         }
 
-    try:
-        parsed = json.loads(result.stdout)
+   try:
+    parsed = json.loads(result.stdout)
 
-        return {
-            "execution": {
-                "status": "success",
-                "time_ms": duration
-            },
-            "meta": {
-                "script": script,
-                "timestamp": datetime.utcnow().isoformat()
-            },
-            "data": parsed.get("data", parsed)
-        }
+    return {
+        "execution": {
+            "status": "success",
+            "time_ms": duration
+        },
+        "meta": {
+            "script": script,
+            "timestamp": datetime.utcnow().isoformat()
+        },
+        "data": parsed.get("data", parsed)
+    }
 
-    except:
-        return {
-            "execution": {
-                "status": "parse_error",
-                "time_ms": duration
-            },
-            "meta": {
-                "script": script,
-                "timestamp": datetime.utcnow().isoformat()
-            },
-            "RAW OUTPUT": result.stdout
-        }
+except:
+    # If not JSON, treat as normal output (NOT an error)
+    return {
+        "execution": {
+            "status": "success",
+            "time_ms": duration
+        },
+        "meta": {
+            "script": script,
+            "timestamp": datetime.utcnow().isoformat()
+        },
+        "output": result.stdout.strip()
+    }
