@@ -57,5 +57,5 @@ def run_script(script, args=None):
                 "script": script,
                 "timestamp": datetime.utcnow().isoformat()
             },
-            "raw": result.stdout
+            "RAW OUTPUT": result.stdout
         }
