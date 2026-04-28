@@ -75,8 +75,8 @@ if [ ${#issues[@]} -eq 0 ]; then
 else
     for i in "${issues[@]}"; do
         echo "$i"
-fi
     done
+fi
 
 
 
