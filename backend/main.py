@@ -43,22 +43,23 @@ def audit_path():
 
 @app.get("/api/simulate/attack")
 def simulate_attack():
-    return run_script(PATH_ATTACK_SCRIPT)
+    audit = run_script(PATH_AUDITOR_SCRIPT, ["--json"])
+    analysis = analyze_risk(audit)
 
     if not analysis.get("vulnerable"):
         return {
             "status": "blocked",
-            "message": "No vulnerability detected"
+            "message": "No vulnerability detected",
+            "analysis": analysis
         }
 
-    exploit = run_script("../scripts/path_hijack_hackathon.sh")
+    exploit = run_script(PATH_ATTACK_SCRIPT)
 
     return {
-        "status": "executed",
-        "analysis": analysis,
-        "exploit_output": exploit
+        "status": exploit["execution"]["status"],
+        "output": exploit.get("output") or exploit.get("data"),
+        "analysis": analysis
     }
-
 
 @app.get("/api/summary")
 def summary():
