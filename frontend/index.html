@@ -122,11 +122,26 @@ async function runExploit() {
         const panel = document.getElementById("exploitStatus");
         panel.innerHTML = "";
 
-        const steps = [
-            "Binary planted",
-            "PATH hijack triggered",
-            "Command execution hijacked"
-        ];
+        if (data.status === "blocked") {
+    panel.innerHTML = "<div class='text-yellow-300'>Exploit blocked (no vulnerability)</div>";
+    log("[BLOCKED] No vulnerability");
+    return;
+}
+
+if (data.status === "error") {
+    panel.innerHTML = "<div class='text-red-400'>Exploit failed</div>";
+    log("[ERROR] Exploit failed");
+    return;
+}
+
+// SUCCESS
+panel.innerHTML = "<div class='text-green-400'>Exploit executed successfully</div>";
+log("[SUCCESS] Exploit executed");
+
+// Show real output
+if (data.output) {
+    data.output.split("\n").forEach(line => log(line));
+}
 
         steps.forEach((step, i) => {
             const div = document.createElement("div");
