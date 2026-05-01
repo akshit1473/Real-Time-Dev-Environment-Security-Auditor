@@ -22,6 +22,11 @@ chmod +x ./python3
 
 echo "[*] Now run 'python3' manually to observe the hijack"
 
+(export PATH=.:$PATH
+python3
+)
+
+
 
 
 
