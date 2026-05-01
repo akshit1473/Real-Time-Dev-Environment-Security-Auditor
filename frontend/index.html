@@ -1,58 +1,70 @@
 <!DOCTYPE html>
-<html class="dark">
+<html class="dark" lang="en">
 <head>
 <meta charset="UTF-8">
 <title>GhostPath</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet">
 
 <style>
 body {
-    background: #0b0e14;
+    background: #0B0E14;
     color: #00FF41;
     font-family: 'JetBrains Mono', monospace;
 }
 
-.glow {
-    text-shadow: 0 0 10px rgba(0,255,65,0.6);
+.glass {
+    background: rgba(29,32,38,0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.terminal {
+    background: #000;
 }
 </style>
 </head>
 
-<body class="h-screen flex flex-col">
+<body class="p-6">
 
 <!-- HEADER -->
-<header class="p-4 border-b border-green-500/20 flex justify-between">
-    <h1 class="text-xl font-bold glow">GhostPath</h1>
-    <div class="flex gap-3">
-        <button onclick="runScan()" class="px-4 py-1 border border-green-400 hover:bg-green-400/10">SCAN</button>
-        <button onclick="runExploit()" class="px-4 py-1 border border-red-400 text-red-400 hover:bg-red-400/10">EXPLOIT</button>
+<div class="flex justify-between mb-6">
+    <h1 class="text-xl text-green-400 font-bold">GHOSTPATH // DEV ENV AUDITOR</h1>
+
+    <div class="space-x-3">
+        <button onclick="runScan()" class="border px-4 py-1 border-green-400">SCAN</button>
+        <button onclick="runExploit()" class="border px-4 py-1 border-red-400 text-red-400">EXPLOIT</button>
     </div>
-</header>
+</div>
 
-<!-- MAIN -->
-<div class="flex-1 p-6 grid grid-cols-3 gap-6">
+<!-- GRID -->
+<div class="grid grid-cols-12 gap-6">
 
-    <!-- RISK -->
-    <div class="border border-green-500/20 p-6 flex flex-col items-center justify-center">
-        <div class="text-sm mb-2">RISK SCORE</div>
-        <div id="riskScore" class="text-5xl glow">--</div>
-    </div>
-
-    
-    <div class="col-span-2 border border-green-500/20 p-4">
-        <div class="mb-2 text-sm">DETECTED ISSUES</div>
-        <div id="issuesContainer" class="space-y-2 text-sm"></div>
+    <!-- RISK PANEL -->
+    <div class="col-span-4 glass p-6 text-center">
+        <div class="text-sm mb-2">SYSTEM RISK INDEX</div>
+        <div id="riskScore" class="text-5xl">--</div>
     </div>
 
+    <!-- ISSUES TABLE -->
+    <div class="col-span-8 glass p-4">
+        <div class="mb-2 text-sm">PATH MISCONFIGURATIONS</div>
 
-    <div class="col-span-3 border border-green-500/20 p-4">
-        <div class="mb-2 text-sm">EXPLOIT STATUS</div>
-        <div id="exploitStatus" class="space-y-1 text-sm"></div>
+        <table class="w-full text-sm">
+            <thead class="text-gray-400">
+                <tr>
+                    <th class="text-left">ISSUE</th>
+                    <th>SEVERITY</th>
+                </tr>
+            </thead>
+
+            <tbody id="issuesTable"></tbody>
+        </table>
     </div>
 
     <!-- TERMINAL -->
-    <div class="col-span-3 border border-green-500/20 p-4 h-48 overflow-y-auto bg-black text-sm">
+    <div class="col-span-12 glass terminal p-4 h-64 overflow-y-auto text-sm">
         <div id="terminal"></div>
     </div>
 
@@ -63,102 +75,81 @@ const API = "http://127.0.0.1:8000";
 
 // ---------- TERMINAL ----------
 function log(msg) {
-    const term = document.getElementById("terminal");
-    const line = document.createElement("div");
-    line.textContent = msg;
-    term.appendChild(line);
-    term.scrollTop = term.scrollHeight;
+    const t = document.getElementById("terminal");
+    const div = document.createElement("div");
+    div.textContent = msg;
+    t.appendChild(div);
+    t.scrollTop = t.scrollHeight;
 }
 
 // ---------- SCAN ----------
 async function runScan() {
     log("[SCAN] Running PATH audit...");
 
-    try {
-        const res = await fetch(API + "/api/audit/path");
-        const data = await res.json();
+    const res = await fetch(API + "/api/audit/path");
+    const data = await res.json();
 
-        document.getElementById("riskScore").innerText = data.risk_score + "/10";
+    document.getElementById("riskScore").innerText = data.risk_score + "/10";
 
-        const container = document.getElementById("issuesContainer");
-        container.innerHTML = "";
+    const table = document.getElementById("issuesTable");
+    table.innerHTML = "";
 
-        if (data.issues.length === 0) {
-            container.innerHTML = "<div class='text-green-400'>No issues detected</div>";
-            log("[OK] No vulnerabilities found");
-            return;
-        }
-
-        data.issues.forEach(issue => {
-            const div = document.createElement("div");
-
-            if (issue.includes("CRITICAL")) {
-                div.className = "text-red-400";
-            } else {
-                div.className = "text-yellow-300";
-            }
-
-            div.textContent = issue;
-            container.appendChild(div);
-
-            log("[ISSUE] " + issue);
-        });
-
-        log("[SCAN COMPLETE]");
-
-    } catch (err) {
-        log("[ERROR] Scan failed");
+    if (data.issues.length === 0) {
+        table.innerHTML = "<tr><td>No issues</td><td>SAFE</td></tr>";
+        log("[OK] No vulnerabilities found");
+        return;
     }
+
+    data.issues.forEach(issue => {
+
+        let severity = "LOW";
+        if (issue.includes("CRITICAL")) severity = "CRITICAL";
+        else if (issue.includes("WARN")) severity = "MEDIUM";
+
+        const row = `
+            <tr class="border-t border-gray-700">
+                <td>${issue}</td>
+                <td class="${
+                    severity === "CRITICAL" ? "text-red-400" :
+                    severity === "MEDIUM" ? "text-yellow-300" :
+                    "text-green-400"
+                }">${severity}</td>
+            </tr>
+        `;
+
+        table.innerHTML += row;
+        log("[ISSUE] " + issue);
+    });
+
+    log("[SCAN COMPLETE]");
 }
 
 // ---------- EXPLOIT ----------
 async function runExploit() {
-    log("[EXEC] Launching PATH hijack simulation...");
+    log("[EXEC] Launching exploit...");
 
-    try {
-        const res = await fetch(API + "/api/simulate/attack");
-        const data = await res.json();
+    const res = await fetch(API + "/api/simulate/attack");
+    const data = await res.json();
 
-        const panel = document.getElementById("exploitStatus");
-        panel.innerHTML = "";
+    if (data.status === "blocked") {
+        log("[BLOCKED] No vulnerability");
+        return;
+    }
 
-        if (data.status === "blocked") {
-    panel.innerHTML = "<div class='text-yellow-300'>Exploit blocked (no vulnerability)</div>";
-    log("[BLOCKED] No vulnerability");
-    return;
-}
-
-if (data.status === "error") {
-    panel.innerHTML = "<div class='text-red-400'>Exploit failed</div>";
-    log("[ERROR] Exploit failed");
-    return;
-}
-
-// SUCCESS
-panel.innerHTML = "<div class='text-green-400'>Exploit executed successfully</div>";
-log("[SUCCESS] Exploit executed");
-
-// Show real output
-if (data.output) {
-    data.output.split("\n").forEach(line => log(line));
-}
-
-        steps.forEach((step, i) => {
-            const div = document.createElement("div");
-
-            div.textContent = step + " → " + (i === steps.length - 1 ? "SUCCESS" : "DONE");
-            div.className = "text-green-400";
-
-            panel.appendChild(div);
-        });
-
-        log("[SUCCESS] Exploit executed");
-
-    } catch (err) {
+    if (data.execution && data.execution.status === "error") {
         log("[ERROR] Exploit failed");
+        return;
+    }
+
+    log("[SUCCESS] Exploit executed");
+
+    if (data.output) {
+        data.output.split("\n").forEach(line => log(line));
     }
 }
 </script>
 
+</body>
+</html>
 </body>
 </html>
