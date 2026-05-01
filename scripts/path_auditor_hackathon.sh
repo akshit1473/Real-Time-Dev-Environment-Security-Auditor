@@ -19,12 +19,19 @@ collect_path_issues() {
         elif [ ! -d "$dir" ]; then
             issues+=("WARN: $dir does not exist")
 
-        else
-            # Writable directory check (real risk)
+        # Normalize path
+        norm_dir="$(realpath -m "$dir" 2>/dev/null || echo "$dir")"
+
+# Ignore virtualenv directories
+        if [[ "$norm_dir" == *"/venv/"* || "$norm_dir" == *"/.venv/"* ]]; then
             if [ -w "$dir" ]; then
-                issues+=("CRITICAL: $dir is writable")
+        issues+=("INFO: $dir is writable (expected virtualenv behavior)")
             fi
-        fi
+             else
+                 if [ -w "$dir" ]; then
+                    issues+=("CRITICAL: $dir is writable")
+                  fi
+                    fi
 
         # Duplicate detection
         if [[ " ${seen_dirs[*]} " =~ " $dir " ]]; then
