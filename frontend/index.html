@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html class="dark">
 <head>
 <meta charset="UTF-8">
 <title>GhostPath</title>
@@ -9,15 +9,16 @@
 
 <style>
 body {
-    background: #0B0E14;
-    color: #00FF41;
+    background-color: #0B0E14;
+    background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
+    background-size: 24px 24px;
     font-family: 'JetBrains Mono', monospace;
 }
 
 .glass {
-    background: rgba(29,32,38,0.4);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(29, 32, 38, 0.4);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .terminal {
@@ -26,11 +27,11 @@ body {
 </style>
 </head>
 
-<body class="p-6">
+<body class="text-green-400 p-6">
 
 <!-- HEADER -->
-<div class="flex justify-between mb-6">
-    <h1 class="text-xl text-green-400 font-bold">GHOSTPATH // DEV ENV AUDITOR</h1>
+<div class="flex justify-between items-center mb-6">
+    <h1 class="text-xl font-bold">GHOSTPATH // AUDIT ENVIRONMENT</h1>
 
     <div class="space-x-3">
         <button onclick="runScan()" class="border px-4 py-1 border-green-400">SCAN</button>
@@ -41,26 +42,48 @@ body {
 <!-- GRID -->
 <div class="grid grid-cols-12 gap-6">
 
-    <!-- RISK PANEL -->
-    <div class="col-span-4 glass p-6 text-center">
-        <div class="text-sm mb-2">SYSTEM RISK INDEX</div>
-        <div id="riskScore" class="text-5xl">--</div>
+    <!-- RISK HUD -->
+    <div class="col-span-5 glass p-6 flex flex-col items-center justify-center">
+
+        <div class="text-xs text-gray-400 mb-4">PATH_RISK_INDEX</div>
+
+        <div class="relative w-56 h-56 flex items-center justify-center">
+
+            <svg class="absolute w-full h-full -rotate-90">
+                <circle cx="112" cy="112" r="100" stroke="rgba(255,255,255,0.05)" stroke-width="2" fill="none"/>
+                <circle id="riskCircle" cx="112" cy="112" r="100"
+                    stroke="#00FF41"
+                    stroke-width="10"
+                    fill="none"
+                    stroke-dasharray="628"
+                    stroke-dashoffset="628"
+                    stroke-linecap="round"/>
+            </svg>
+
+            <div class="text-center">
+                <div id="riskScore" class="text-5xl font-bold">--</div>
+                <div id="riskLabel" class="text-xs mt-2">SCANNING...</div>
+            </div>
+
+        </div>
     </div>
 
     <!-- ISSUES TABLE -->
-    <div class="col-span-8 glass p-4">
-        <div class="mb-2 text-sm">PATH MISCONFIGURATIONS</div>
+    <div class="col-span-7 glass p-4">
+
+        <div class="mb-2 text-sm text-gray-400">PATH MISCONFIGURATIONS</div>
 
         <table class="w-full text-sm">
-            <thead class="text-gray-400">
+            <thead class="text-gray-500">
                 <tr>
-                    <th class="text-left">ISSUE</th>
+                    <th class="text-left">DIRECTORY / ISSUE</th>
                     <th>SEVERITY</th>
                 </tr>
             </thead>
 
             <tbody id="issuesTable"></tbody>
         </table>
+
     </div>
 
     <!-- TERMINAL -->
@@ -82,6 +105,20 @@ function log(msg) {
     t.scrollTop = t.scrollHeight;
 }
 
+// ---------- UPDATE RING ----------
+function updateRing(score) {
+    const circle = document.getElementById("riskCircle");
+    const circumference = 628;
+    const offset = circumference - (score / 10) * circumference;
+    circle.style.strokeDashoffset = offset;
+
+    const label = document.getElementById("riskLabel");
+
+    if (score >= 7) label.innerText = "HIGH RISK";
+    else if (score >= 3) label.innerText = "MODERATE";
+    else label.innerText = "LOW";
+}
+
 // ---------- SCAN ----------
 async function runScan() {
     log("[SCAN] Running PATH audit...");
@@ -89,13 +126,14 @@ async function runScan() {
     const res = await fetch(API + "/api/audit/path");
     const data = await res.json();
 
-    document.getElementById("riskScore").innerText = data.risk_score + "/10";
+    document.getElementById("riskScore").innerText = data.risk_score;
+    updateRing(data.risk_score);
 
     const table = document.getElementById("issuesTable");
     table.innerHTML = "";
 
     if (data.issues.length === 0) {
-        table.innerHTML = "<tr><td>No issues</td><td>SAFE</td></tr>";
+        table.innerHTML = "<tr><td>No issues</td><td class='text-green-400'>SAFE</td></tr>";
         log("[OK] No vulnerabilities found");
         return;
     }
@@ -107,14 +145,14 @@ async function runScan() {
         else if (issue.includes("WARN")) severity = "MEDIUM";
 
         const row = `
-            <tr class="border-t border-gray-700">
-                <td>${issue}</td>
-                <td class="${
-                    severity === "CRITICAL" ? "text-red-400" :
-                    severity === "MEDIUM" ? "text-yellow-300" :
-                    "text-green-400"
-                }">${severity}</td>
-            </tr>
+        <tr class="border-t border-gray-700">
+            <td>${issue}</td>
+            <td class="${
+                severity === "CRITICAL" ? "text-red-400" :
+                severity === "MEDIUM" ? "text-yellow-300" :
+                "text-green-400"
+            }">${severity}</td>
+        </tr>
         `;
 
         table.innerHTML += row;
@@ -136,11 +174,6 @@ async function runExploit() {
         return;
     }
 
-    if (data.execution && data.execution.status === "error") {
-        log("[ERROR] Exploit failed");
-        return;
-    }
-
     log("[SUCCESS] Exploit executed");
 
     if (data.output) {
@@ -149,7 +182,5 @@ async function runExploit() {
 }
 </script>
 
-</body>
-</html>
 </body>
 </html>
